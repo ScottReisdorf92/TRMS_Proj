@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="ISO-8859-1">
+	<title>Employee Form</title>
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>    
+    <style>
+		.modal-backdrop.in {
+    		opacity: 0.5;
+		}
+	</style>
+</head>
+<body onload="getCookies()">
+	<div class="container-fluid p-0">
+
+    	<nav class="navbar navbar-dark bg-dark">
+        	<div class="container-fluid">
+	            <img src="ClientSideResources/logo-large.png" alt="" class="navbar-brand" width="75" height="75">
+	            <span class="navbar-text" ><u id="welcomeUser">Welcome!</u><button type="button" onclick="logout()" class="btn btn-link">Logout</button></span>
+         	</div>
+     	</nav>
+    </div>
+	<div class="container-fluid m-0">
+		<div  class="card mb-3" style="width: 10em;">
+			<div id="approvalMsg" class="card-body" ></div>
+		</div>
+    	<div class="m-5 container">
+          		<table class="table table-sm table-light table-striped table-bordered table-hover shadow">
+              		<thead class="table-dark">
+                  		<tr><th colspan="2">Form Info</th></tr>
+              		</thead>
+              		<tbody>
+	                  	<tr><td>Form ID:</td><td id="formId">-</td></tr>
+		                <tr><td>Event Name:</td><td id="eventName">-</td></tr>
+		                <tr><td>Event Description:</td><td id="desc">-</td></tr>
+		                <tr><td>Event Type:</td><td id="type">-</td></tr>
+		                <tr><td>Grading Format:</td><td id="format">-</td></tr>
+		                <tr><td>Passing Grade:</td><td id="passGrade">-</td></tr>
+		                <tr><td>Event Cost:</td><td id="cost">-</td></tr>
+		                <tr><td>Location:</td><td id="location">-</td></tr>
+		                <tr><td>Start Date:</td><td id="startDate">-</td></tr>
+		                <tr><td>Submit Date:</td><td id="subDate">-</td></tr>
+	              	</tbody>
+				</table>
+				<div id="submitGrade" style="display: none;">
+					<div> 
+						<label for="passGrade" class="form-label float-start">Grade Needed to pass: <small class="text-muted">Only need to fill out if recieving letter grade</small></label>
+						<select class="form-select" id="grades" required>
+							<option value="A">A</option>
+							<option value="B">B</option>
+							<option value="C">C</option>
+							<option value="D">D</option>
+							<option value="F">F</option>
+							<option value="S">S</option>
+							<option value="N">N</option>
+						</select>
+						<button type="button" class="btn btn-secondary" onclick="submitGrade()">Submit Grade</button>
+					</div>
+				</div>
+          		<button id="delFormButton" type="button" class="btn btn-dark mt-3" data-toggle="modal" data-targert="#delFormModal">Delete Form</button>
+          	  	<div class="modal fade" id="delFormModal" tabindex="-1" role="dialog" aria-labelledby="delFormModal" aria-hidden="true">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title" id="delFormModalLabel">Confirm Deletion</h5>
+								<button type="button" class="btn btn-light" data-dismiss="modal">
+								<i class="fa fa-times" aria-hidden="true"></i>
+								</button>
+							</div>
+							<div class="modal-body">
+								<p>This will remove your request for reimbursement. <br>
+								Are you sure you want to delete this form?</p>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">cancel</button>
+								<button onclick="delForm()" type="button" class="btn btn-primary">delete form</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+    	</div>
+</body>
+<script>
+	$(document).ready(function(){
+	    $("#delFormButton").click(function(){
+	        $("#delFormModal").modal('show');
+	    });
+	});
+
+	function getCookies() {
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log("Dashboard page " + this.responseText);
+                if(this.responseText != "{}") {
+                    info = JSON.parse(this.responseText)
+                    console.log(info);
+                    loggedInUser = info.employee;
+                    supervisor = info.supervisor;
+                    dept = info.department;
+                    event = info.event;
+                    form = info.form;
+                    console.log(loggedInUser);
+                    loadForm();
+                } else {
+                    window.location.href='http://localhost:8080/TRMSProject/';
+                }
+            }
+        }
+
+        xhttp.open("GET", "http://localhost:8080/TRMSProject/userForm.do", true);
+
+        xhttp.send();
+    }
+
+    // This one is a doozey
+    function loadForm() {
+		document.getElementById("welcomeUser").innerHTML = "Welcome " + loggedInUser.fname;
+		if (form.supAppr == 'APPROVED' && form.bencoAppr == 'APPROVED' && form.dheadAppr == 'APPROVED') {
+			document.getElementById("approvalMsg").innerHTML = 'APPROVED';
+		} else if (form.supAppr == 'DENIED' || form.bencoAppr == 'DENIED' || form.dheadAppr == 'DENIED') {
+			document.getElementById("approvalMsg").innerHTML = 'DENIED';
+		} else {
+			document.getElementById("approvalMsg").innerHTML = 'PENDING';
+		}
+        // Fill in employee table
+        document.getElementById("formId").innerHTML = form.formId;
+        document.getElementById("eventName").innerHTML = event.name;
+        document.getElementById("desc").innerHTML = form.desc;
+        document.getElementById("type").innerHTML = event.eventType;
+        document.getElementById("format").innerHTML = event.gradeFormat;
+        document.getElementById("passGrade").innerHTML = event.passGrade;
+        document.getElementById("cost").innerHTML = event.cost;
+        document.getElementById("location").innerHTML = event.location;
+		document.getElementById("startDate").innerHTML = event.startDate;
+		document.getElementById("subDate").innerHTML = form.subDate;
+		if (form.grade == "IN_PROCESS" && form.supAppr == 'APPROVED' && form.bencoAppr == 'APPROVED' && form.dheadAppr == 'APPROVED') {
+			document.getElementById("submitGrade").style.display = "block";
+		}
+	}
+	
+	function delForm() {
+	        let xhttp = new XMLHttpRequest();
+
+	        xhttp.onreadystatechange = function() {
+
+	            if(this.readyState == 4 && this.status == 200) {
+	                console.log("Dashboard page " + this.responseText);
+	                if(this.responseText != "{}") {
+	                    info = JSON.parse(this.responseText)
+	                    console.log(info);
+	             
+	                    window.location.href='http://localhost:8080/TRMSProject/dashboard.html'
+	                }
+	            }
+	        }
+
+	        xhttp.open("GET", "http://localhost:8080/TRMSProject/deleteForm.do?fid=" + form.formId, true);
+
+	        xhttp.send();
+	    }
+		
+	
+	function logout() {
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log(this.responseText);
+                window.location.href='http://localhost:8080/TRMSProject/';
+                
+            }
+        }
+
+        xhttp.open("GET", "http://localhost:8080/TRMSProject/logout.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+
+        xhttp.send();
+	}
+	
+	function submitGrade() {
+		let grades = document.getElementById("grades");
+		let grade = grades.options[grades.selectedIndex].value;
+		console.log(grade);
+		form.grade = grade;
+
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log(this.responseText);
+                window.location.reload();
+                
+            }
+        }
+
+        xhttp.open("POST", "http://localhost:8080/TRMSProject/submitGrade.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+
+        xhttp.send(JSON.stringify(form));
+	}
+	
+</script>
+</html>

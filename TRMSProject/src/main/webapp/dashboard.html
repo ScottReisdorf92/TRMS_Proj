@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+</head>
+<body onload="getCookies()" id="badIdea">
+
+    <div class="container-fluid p-0">
+
+        <nav class="navbar navbar-dark bg-dark">
+            <div class="container-fluid">
+                <img src="ClientSideResources/logo-large.png" alt="" class="navbar-brand" width="75" height="75">
+                <span class="navbar-text" ><u id="welcomeUser">Welcome!</u><button type="button" onclick="logout()" class="btn btn-link">Logout</button></span>
+            </div>
+        </nav>
+		<div class="container-fluid m-0" style="width: 100%">
+	        <div class="my-5 mx-4" style="width: 30%; float: left">
+	            <table class="table table-sm table-light table-striped table-hover shadow">
+	                <thead class="table-dark">
+	                    <tr><th colspan="2">Employee Info</th></tr>
+	                </thead>
+	                <tbody>
+	                    <tr><td>Employee ID:</td><td id="empId">-</td></tr>
+	                    <tr><td>Employee Name:</td><td id="empName">-</td></tr>
+	                    <tr><td>Employee Username:</td><td id="username">-</td></tr>
+	                    <tr><td>Employee Email:</td><td id="empEmail">-</td></tr>
+	                    <tr><td>Supervisor ID:</td><td id="supId">-</td></tr>
+	                    <tr><td>Supervisor Name:</td><td id="supName">-</td></tr>
+	                    <tr><td>Department ID:</td><td id="deptId">-</td></tr>
+	                    <tr><td>Department Name:</td><td id="deptName">-</td></tr>
+	                    <tr><td>Available Reimbursment:</td><td id="availAmt">-</td></tr>
+	                </tbody>
+	            </table>
+            </div>
+            <div class="my-5 mx-4" style="width: 60%; float:right">
+	            <p><small id="formInstruction"></small></p>
+	            <table class="table table-light table-striped table-bordered table-hover shadow">
+	                <thead class="table-dark">
+	                    <tr><th>Form id</th><th>Event Name</th><th>Event Type</th><th>Description</th></tr>
+	                </thead>
+               		<tbody id="formsTable">
+                	</tbody>
+                </table>
+                <button id="newFormButton" onclick="newForm()" type="button" class="btn btn-dark">Create New Form</button>
+            </div>
+		</div>
+		<div class="m-5">
+	    	<table class="table table-light table-striped table-bordered table-hover shadow">
+          		<thead id="subHead" class="table-dark"></thead>
+            	<tbody id="subordinates"></tbody>
+	    	</table>
+	    </div>
+    </div>
+</body>
+<script>
+
+    function getCookies() {
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log("Dashboard page " + this.responseText);
+                if(this.responseText != "{}") {
+                    info = JSON.parse(this.responseText)
+                    console.log(info);
+                    loggedInUser = info.employee;
+                    supervisor = info.supervisor;
+                    dept = info.department;
+                    events = info.events;
+                    forms = info.forms;
+                    subordinates = info.subordinates;
+                    console.log(loggedInUser);
+                    loadUser();
+                } else {
+                    window.location.href='http://localhost:8080/TRMSProject/';
+                }
+            }
+        }
+
+        xhttp.open("GET", "http://localhost:8080/TRMSProject/loggedInUser.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+        xhttp.send();
+    }
+
+    // This one is a doozey
+    function loadUser() {
+        document.getElementById("welcomeUser").innerHTML = "Welcome " + loggedInUser.fname;
+        // Fill in employee table
+        document.getElementById("empId").innerHTML = loggedInUser.empId;
+        document.getElementById("empName").innerHTML = loggedInUser.fname + " " + loggedInUser.lname;
+        document.getElementById("username").innerHTML = loggedInUser.username;
+        document.getElementById("empEmail").innerHTML = loggedInUser.email;
+        document.getElementById("supId").innerHTML = loggedInUser.supId;
+        document.getElementById("supName").innerHTML = supervisor.fname + " " + supervisor.lname;
+        document.getElementById("deptId").innerHTML = dept.deptId;
+        document.getElementById("deptName").innerHTML = dept.name;
+        document.getElementById("availAmt").innerHTML = loggedInUser.availAmt;
+        if(forms.length == 0) {
+            document.getElementById("formInstruction").innerHTML = "You have no forms submitted";
+        } else {
+            let ftable = document.getElementById("formsTable");
+    
+            for (var i = 0; i < forms.length; i++) {
+                //for (var j = 0; j < events.length)
+                let row = ftable.insertRow();
+                row.setAttribute("onclick", "loadForm(this)", 0);
+
+                let formId = row.insertCell();
+                formId.innerHTML = forms[i].formId;
+                let eventName = row.insertCell();
+                eventName.innerHTML = events[i].name;
+                let type = row.insertCell();
+                type.innerHTML = events[i].eventType;
+                let desc = row.insertCell();
+                desc.innerHTML = forms[i].desc;                
+            }
+        }
+
+
+        if(subordinates.length != 0) {
+            let subHead = document.getElementById("subHead");
+            let headRow = subHead.insertRow();
+
+            let idCell = headRow.insertCell();
+            idCell.innerHTML = "Employee ID#";
+            let nameCell = headRow.insertCell();
+            nameCell.innerHTML = "Name";
+            let usernameCell = headRow.insertCell();
+            usernameCell.innerHTML = "Username";
+            let emailCell = headRow.insertCell();
+            emailCell.innerHTML = "Email";
+            let amtCell = headRow.insertCell();
+            amtCell.innerHTML = "Available Reimbursement $";
+
+            let subTable = document.getElementById("subordinates");
+            for (var i = 0; i < subordinates.length; i++) {
+                //for (var j = 0; j < events.length)
+                let row = subTable.insertRow();
+                row.setAttribute("onclick", "loadEmp(this)", 0);
+
+                let eid = row.insertCell();
+                eid.innerHTML = subordinates[i].empId;
+                let ename = row.insertCell();
+                ename.innerHTML = subordinates[i].fname + " " + subordinates[i].lname;
+                let uname = row.insertCell();
+                uname.innerHTML = subordinates[i].username;
+                let eemail = row.insertCell();
+                eemail.innerHTML = subordinates[i].email;
+                let eamt = row.insertCell();
+                eamt.innerHTML = subordinates[i].availAmt;
+
+       		}
+        } 
+    }
+
+    function loadForm(row) {
+        document.cookie = "formId=" + row.childNodes[0].innerHTML + "; Secure;";
+        console.log(document.cookie);
+        
+        console.log("Form Loaded: " + row.childNodes[0].innerHTML);
+        window.location.href = 'http://localhost:8080/TRMSProject/employeeform.html';    
+    }
+
+    function loadEmp(row) {
+        document.cookie = "subId=" + row.childNodes[0].innerHTML + "; Secure;";
+        console.log(document.cookie);
+        
+        console.log("Form Loaded: " + row.childNodes[0].innerHTML);
+        window.location.href = 'http://localhost:8080/TRMSProject/viewEmployee.html';  
+    }
+
+    function newForm() {
+        window.location.href='http://localhost:8080/TRMSProject/ReimbursementForm.html'
+    }
+    
+
+
+    function logout() {
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log(this.responseText);
+                window.location.href='http://localhost:8080/TRMSProject/';
+                
+            }
+        }
+
+        xhttp.open("GET", "http://localhost:8080/TRMSProject/logout.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+
+        xhttp.send();
+    }
+</script>
+</html>

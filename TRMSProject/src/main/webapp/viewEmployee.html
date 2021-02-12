@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Employee</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+</head>
+<body onload="getCookies()" id="badIdea">
+
+    <div class="container-fluid p-0">
+
+        <nav class="navbar navbar-dark bg-dark">
+            <div class="container-fluid">
+                <img src="ClientSideResources/logo-large.png" alt="" class="navbar-brand" width="75" height="75">
+                <span class="navbar-text" ><u id="welcomeUser">Welcome!</u><button type="button" onclick="logout()" class="btn btn-link">Logout</button></span>
+            </div>
+        </nav>
+            <div class="my-5 mx-4">
+                <p><small id="empInfo"></small></p>
+                <p><small id="initAppr">Forms awaiting initial approval</small></p>
+	            <table class="table table-light table-striped table-bordered table-hover shadow">
+	                <thead class="table-dark">
+	                    <tr><th>Form id</th><th>Event Name</th><th>Event Type</th><th>Description</th><th>Supervisor Approval</th><th>Department Head Approval</th><th>Benco Approval</th><th>Urgent</th></tr>
+	                </thead>
+               		<tbody id="initTable">
+                	</tbody>
+                </table>
+            </div>
+            <div class="my-5 mx-4">
+	            <p><small id="finApprTitle">Forms awaiting final approval and reimbursement</small></p>
+	            <table class="table table-light table-striped table-bordered table-hover shadow">
+	                <thead class="table-dark" id="finHead">
+	                </thead>
+               		<tbody id="finTable">
+                	</tbody>
+                </table>
+            </div>
+            <div class="my-5 mx-4">
+	            <p><small id="complete">Completed Forms</small></p>
+	            <table class="table table-light table-striped table-bordered table-hover shadow">
+	                <thead class="table-dark">
+	                    <tr><th>Form id</th><th>Event Name</th><th>Event Type</th><th>Description</th><th>Final Grade</th><th>Final Approval</th></tr>
+	                </thead>
+               		<tbody id="completeTable">
+                	</tbody>
+                </table>
+            </div>
+            <!-- Table to display full info of a single form with approve or deny buttons beneath -->
+            <div class="mx-5">
+                <table class="table table-sm table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr><th colspan="2">Form Info</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Form ID:</td><td id="formId">-</td></tr>
+                        <tr><td>Event Name:</td><td id="eventName">-</td></tr>
+                        <tr><td>Event Description:</td><td id="desc">-</td></tr>
+                        <tr><td>Event Type:</td><td id="type">-</td></tr>
+                        <tr><td>Grading Format:</td><td id="format">-</td></tr>
+                        <tr><td>Passing Grade:</td><td id="passGrade">-</td></tr>
+                        <tr><td>Final Grade:</td><td id="finGrade">-</td></tr>
+                        <tr><td>Event Cost:</td><td id="cost">-</td></tr>
+                        <tr><td>Location:</td><td id="location">-</td></tr>
+                        <tr><td>Start Date:</td><td id="startDate">-</td></tr>
+                        <tr><td>Submit Date:</td><td id="subDate">-</td></tr>
+                        <tr><td>Supervisor Approval:</td><td id="supAppr">-</td></tr>
+                        <tr><td>Dept. Head Approval:</td><td id="deptAppr">-</td></tr>
+                        <tr><td>Benco Approval:</td><td id="bencoAppr">-</td></tr>
+                        <tr><td>Final Approval:</td><td id="finAppr">-</td></tr>
+                    </tbody>
+                </table>
+                <div id="btnAppr"></div>
+            </div>
+		</div>
+    </div>
+</body>
+<script>
+        function getCookies() {
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log("Dashboard page " + this.responseText);
+                if(this.responseText != "{}") {
+                    info = JSON.parse(this.responseText)
+                    console.log(info);
+                    loggedInUser = info.employee;
+                    subordinate = info.subordinate;
+                    dept = info.department;
+                    events = info.events;
+                    forms = info.forms;
+                    console.log(loggedInUser);
+                    loadSubForms();
+                } else {
+                    window.location.href='http://localhost:8080/TRMSProject/';
+                }
+            }
+        }
+
+        xhttp.open("GET", "http://localhost:8080/TRMSProject/viewEmployee.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+
+        xhttp.send();
+    }
+
+    function loadSubForms() {
+        document.getElementById("welcomeUser").innerHTML = "Welcome " + loggedInUser.fname;
+        document.getElementById("empInfo").innerHTML = "Employee ID# " + subordinate.empId + " | Name: " + subordinate.fname + " " + subordinate.lname;
+        let initTable = document.getElementById("initTable");
+        let finTable = document.getElementById("finTable");
+        let comTable = document.getElementById("completeTable");
+        // add final approval table if benco
+        if(loggedInUser.empId == 3) {
+            let head = document.getElementById("finHead");
+            let headRow = head.insertRow();
+
+            //formid, eventname, type, desc, fingrade, finappr
+            let formCell = headRow.insertCell();
+            formCell.innerHTML = "Form Id";
+            let nameCell = headRow.insertCell();
+            nameCell.innerHTML = "Event Name";
+            let typeCell = headRow.insertCell();
+            typeCell.innerHTML = "Event Type";
+            let descCell = headRow.insertCell();
+            descCell.innerHTML = "Descrition";
+            let gradeCell = headRow.insertCell();
+            gradeCell.innerHTML = "Final Grade";
+            let apprCell = headRow.insertCell();
+            apprCell.innerHTML = "Final Approval"
+        }
+
+        // For loop to create 3 tables, one per if statement
+        for (var i = 0; i < forms.length; i++) {
+            if (forms[i].grade == 'IN_PROCESS' && (forms[i].supAppr != 'DENIED' && forms[i].dheadAppr != 'DENIED' && forms[i].bencoAppr != 'DENIED')) {
+                //for (var j = 0; j < events.length)
+                let row = initTable.insertRow();
+                row.setAttribute("onclick", "loadSubForm(this)", 0);
+                
+
+                let formId = row.insertCell();
+                formId.innerHTML = forms[i].formId;
+                let eventName = row.insertCell();
+                eventName.innerHTML = events[i].name;
+                let type = row.insertCell();
+                type.innerHTML = events[i].eventType;
+                let desc = row.insertCell();
+                desc.innerHTML = forms[i].desc;
+                let supAppr = row.insertCell();
+                supAppr.innerHTML = forms[i].supAppr;
+                let deptAppr = row.insertCell();
+                deptAppr.innerHTML = forms[i].dheadAppr;
+                let bencoAppr = row.insertCell();
+                bencoAppr.innerHTML = forms[i].bencoAppr;
+                let urge = row.insertCell();
+                urge.style.textAlign = "center";
+                if(forms[i].urgent) {
+                    urge.innerHTML = "<i class='fa fa-exclamation-circle' aria-hidden='true' style='color: orange'></i>";
+                } 
+                
+
+
+            } else if ((forms[i].supAppr == 'DENIED' || forms[i].dheadAppr == 'DENIED' || forms[i].bencoAppr == 'DENIED' || forms[i].finAppr != 'PENDING')) {
+                  //for (var j = 0; j < events.length)
+                let row = comTable.insertRow();
+                row.setAttribute("onclick", "loadSubForm(this)", 0);
+                console.log(forms[i].urgent);
+                
+
+                let formId = row.insertCell();
+                formId.innerHTML = forms[i].formId;
+                let eventName = row.insertCell();
+                eventName.innerHTML = events[i].name;
+                let type = row.insertCell();
+                type.innerHTML = events[i].eventType;
+                let desc = row.insertCell();
+                desc.innerHTML = forms[i].desc;
+                let finGrade = row.insertCell();
+                finGrade.innerHTML = forms[i].grade;
+                let finAppr = row.insertCell();
+                if (forms[i].finAppr == 'APPROVED') {
+                    finAppr.innerHTML = 'APPROVED'; 
+                }  else {
+                    finAppr.innerHTML = 'DENIED';
+                }
+                
+            } else if (loggedInUser.empId == 3 && forms[i].finAppr == 'PENDING') {
+                let row = finTable.insertRow();
+                row.setAttribute("onclick", "loadSubForm(this)", 0);
+                console.log(forms[i].urgent);
+                
+                
+                let formId = row.insertCell();
+                formId.innerHTML = forms[i].formId;
+                let eventName = row.insertCell();
+                eventName.innerHTML = events[i].name;
+                let type = row.insertCell();
+                type.innerHTML = events[i].eventType;
+                let desc = row.insertCell();
+                desc.innerHTML = forms[i].desc;
+                let finGrade = row.insertCell();
+                finGrade.innerHTML = forms[i].grade;
+                let finAppr = row.insertCell();
+                finAppr.innerHTML = forms[i].finAppr;
+            }
+        }
+    }
+
+    function loadSubForm(row) {
+        // To make a new page or not make a new page, that is the question
+        formId = row.childNodes[0].innerHTML;
+        console.log(formId);
+        
+        for (let i = 0; i < forms.length; i++) {
+            if (forms[i].formId == formId) {
+                console.log(i)
+                currForm = forms[i];
+            }
+        }
+
+        for (let i = 0; i < events.length; i++) {
+            if (events[i].eventId == currForm.eventId) {
+                var currEvent = events[i];
+                console.log(currEvent);
+            }
+        }
+
+        document.getElementById("formId").innerHTML = currForm.formId;
+        document.getElementById("eventName").innerHTML = currEvent.name;
+        document.getElementById("desc").innerHTML = currForm.desc;
+        document.getElementById("type").innerHTML = currEvent.eventType;
+        document.getElementById("format").innerHTML = currEvent.gradeFormat;
+        document.getElementById("passGrade").innerHTML = currEvent.passGrade;
+        document.getElementById("finGrade").innerHTML = currForm.grade;
+        document.getElementById("cost").innerHTML = currEvent.cost;
+        document.getElementById("location").innerHTML = currEvent.location;
+		document.getElementById("startDate").innerHTML = currEvent.startDate;
+        document.getElementById("subDate").innerHTML = currForm.subDate;
+        document.getElementById("supAppr").innerHTML = currForm.supAppr;
+        document.getElementById("deptAppr").innerHTML = currForm.dheadAppr;
+		document.getElementById("bencoAppr").innerHTML = currForm.bencoAppr;
+        document.getElementById("finAppr").innerHTML = currForm.finAppr;
+        // approval rows
+        if (currForm.supAppr == 'APPROVED') {
+            document.getElementById("supAppr").parentElement.style.backgroundColor = "green";
+        } else if (currForm.supAppr == 'DENIED') {
+            document.getElementById("supAppr").parentElement.style.backgroundColor = "red";           
+        } else if (subordinate.supId == loggedInUser.empId && currForm.dheadAppr != 'DENIED' && currForm.bencoAppr != 'DENIED') {
+                document.getElementById("btnAppr").innerHTML = `<button onclick="approval('APPROVED', currForm)" class='btn btn-primary m-3' type='button'>Approve</button><button onclick="approval('DENIED', currForm)" class='btn btn-danger m-3' type='button'>Deny</button>`
+        }
+        document.getElementById("supAppr").innerHTML = currForm.supAppr;
+       
+        if (currForm.dheadAppr == 'APPROVED') {
+            document.getElementById("deptAppr").parentElement.style.backgroundColor = "green";
+        } else if (currForm.dheadAppr == 'DENIED') {
+            document.getElementById("deptAppr").parentElement.style.backgroundColor = "red";
+        } else {
+                document.getElementById("btnAppr").innerHTML = `<button onclick="approval('APPROVED', currForm)" class='btn btn-primary m-3' type='button'>Approve</button><button onclick="approval('DENIED', currForm)" class='btn btn-danger m-3' type='button'>Deny</button>`
+        }
+        document.getElementById("deptAppr").innerHTML = currForm.dheadAppr;
+
+        if (currForm.bencoAppr == 'APPROVED') {
+            document.getElementById("bencoAppr").parentElement.style.backgroundColor = "green";
+        } else if (currForm.bencoAppr == 'DENIED') {
+            document.getElementById("bencoAppr").parentElement.style.backgroundColor = "red";
+        } else if (loggedInUser.empId == 3 && currForm.supAppr != 'DENIED' && currForm.dheadAppr != 'DENIED') {
+                document.getElementById("btnAppr").innerHTML = `<button onclick="approval('APPROVED', currForm)" class='btn btn-primary m-3' type='button'>Approve</button><button onclick="approval('DENIED', currForm)" class='btn btn-danger m-3' type='button'>Deny</button>`
+        }
+        document.getElementById("bencoAppr").innerHTML = currForm.bencoAppr;
+
+        if (currForm.grade != 'IN_PROCESS' && loggedInUser.empId == 3) {
+            document.getElementById("btnAppr").innerHTML = `<button onclick="finApproval('APPROVED', currForm)" class='btn btn-primary m-3' type='button'>Approve</button><button onclick="finApproval('DENIED', currForm)" class='btn btn-danger m-3' type='button'>Deny</button>`
+        }
+        document.getElementById("bencoAppr").innerHTML = currForm.finAppr;
+    }
+
+    function approval(status, apprForm) {
+        if (subordinate.supId == loggedInUser.empId) {
+            console.log("Sup Appr");
+            apprForm.supAppr = status;
+        }
+        if (dept.deptHead == loggedInUser.empId && dept.deptId == subordinate.deptId) {
+            console.log("dept Appr");
+            apprForm.dheadAppr = status;
+        }
+        if (loggedInUser.empId == 3) {
+            console.log("benco Appr");
+            apprForm.bencoAppr = status;
+        }
+
+        let xhttp = new XMLHttpRequest();
+        console.log(status);
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log("Dashboard page " + this.responseText);
+                if(this.responseText != "{}") {
+                    info = JSON.parse(this.responseText)
+                    console.log(info);
+                    window.location.reload();
+                    
+                }
+            }   
+        }     
+
+        xhttp.open("POST", "http://localhost:8080/TRMSProject/approval.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+        console.log(apprForm);
+        xhttp.send(JSON.stringify(apprForm));
+    }
+
+    function finApproval(status, apprForm) {
+        if (apprForm.grade != 'IN_PROCESS' && loggedInUser.empId == 3) {
+            apprForm.finAppr = status;
+        }
+
+
+        let xhttp = new XMLHttpRequest();
+        console.log(status);
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log("Dashboard page " + this.responseText);
+                if(this.responseText != "{}") {
+                    info = JSON.parse(this.responseText)
+                    console.log(info);
+                    window.location.reload();
+                }
+            }   
+        }
+        xhttp.open("POST", "http://localhost:8080/TRMSProject/approval.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+        console.log(apprForm);
+        xhttp.send(JSON.stringify(apprForm));
+    }
+
+    function logout() {
+        let xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+
+            if(this.readyState == 4 && this.status == 200) {
+                console.log(this.responseText);
+                window.location.href='http://localhost:8080/TRMSProject/';
+                
+            }
+        }
+
+        xhttp.open("GET", "http://localhost:8080/TRMSProject/logout.do", true);
+        xhttp.setRequestHeader('Content-Type','application/json');
+
+
+        xhttp.send();
+    }
+</script>
+
+</html>
